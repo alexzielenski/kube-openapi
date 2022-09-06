@@ -81,6 +81,13 @@ func (o *Operation) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &o.VendorExtensible)
 }
 
+func (o *Operation) UnmarshalUnstructured(data interface{}) error {
+	if err := FromUnstructured(data, &o.OperationProps); err != nil {
+		return err
+	}
+	return FromUnstructured(data, &o.VendorExtensible)
+}
+
 // MarshalJSON converts this items object to JSON
 func (o Operation) MarshalJSON() ([]byte, error) {
 	b1, err := json.Marshal(o.OperationProps)

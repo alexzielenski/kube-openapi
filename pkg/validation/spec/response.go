@@ -48,6 +48,16 @@ func (r *Response) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &r.VendorExtensible)
 }
 
+func (r *Response) UnmarshalUnstructured(data interface{}) error {
+	if err := FromUnstructured(data, &r.ResponseProps); err != nil {
+		return err
+	}
+	if err := FromUnstructured(data, &r.Refable); err != nil {
+		return err
+	}
+	return FromUnstructured(data, &r.VendorExtensible)
+}
+
 // MarshalJSON converts this items object to JSON
 func (r Response) MarshalJSON() ([]byte, error) {
 	b1, err := json.Marshal(r.ResponseProps)

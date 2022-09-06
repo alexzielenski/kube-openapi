@@ -16,6 +16,7 @@ package spec
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 
 	"github.com/go-openapi/swag"
@@ -55,6 +56,33 @@ func (p *Paths) UnmarshalJSON(data []byte) error {
 			}
 			var pi PathItem
 			if err := json.Unmarshal(v, &pi); err != nil {
+				return err
+			}
+			p.Paths[k] = pi
+		}
+	}
+	return nil
+}
+
+func (p *Paths) UnmarshalUnstructured(data interface{}) error {
+	res, ok := data.(map[string]interface{})
+	if !ok {
+		return errors.New("bad format")
+	}
+
+	for k, v := range res {
+		if strings.HasPrefix(strings.ToLower(k), "x-") {
+			if p.Extensions == nil {
+				p.Extensions = make(map[string]interface{})
+			}
+			p.Extensions[k] = v
+		}
+		if strings.HasPrefix(k, "/") {
+			if p.Paths == nil {
+				p.Paths = make(map[string]PathItem)
+			}
+			var pi PathItem
+			if err := FromUnstructured(v, &pi); err != nil {
 				return err
 			}
 			p.Paths[k] = pi

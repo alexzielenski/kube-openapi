@@ -57,3 +57,10 @@ func (t *Tag) UnmarshalJSON(data []byte) error {
 	}
 	return json.Unmarshal(data, &t.VendorExtensible)
 }
+
+func (t *Tag) UnmarshalUnstructured(data interface{}) error {
+	if err := FromUnstructured(data, &t.TagProps); err != nil {
+		return err
+	}
+	return FromUnstructured(data, &t.VendorExtensible)
+}

@@ -16,6 +16,7 @@ package spec
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -36,6 +37,10 @@ func (r Refable) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON unmarshalss the ref from json
 func (r *Refable) UnmarshalJSON(d []byte) error {
 	return json.Unmarshal(d, &r.Ref)
+}
+
+func (r *Refable) UnmarshalUnstructured(data interface{}) error {
+	return FromUnstructured(data, &r.Ref)
 }
 
 // Ref represents a json reference that is potentially resolved
@@ -144,6 +149,14 @@ func (r *Ref) UnmarshalJSON(d []byte) error {
 	var v map[string]interface{}
 	if err := json.Unmarshal(d, &v); err != nil {
 		return err
+	}
+	return r.fromMap(v)
+}
+
+func (r *Ref) UnmarshalUnstructured(data interface{}) error {
+	v, ok := data.(map[string]interface{})
+	if !ok {
+		return errors.New("bad format")
 	}
 	return r.fromMap(v)
 }

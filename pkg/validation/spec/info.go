@@ -172,3 +172,10 @@ func (i *Info) UnmarshalJSON(data []byte) error {
 	}
 	return json.Unmarshal(data, &i.VendorExtensible)
 }
+
+func (i *Info) UnmarshalUnstructured(data interface{}) error {
+	if err := FromUnstructured(data, &i.InfoProps); err != nil {
+		return err
+	}
+	return FromUnstructured(data, &i.VendorExtensible)
+}

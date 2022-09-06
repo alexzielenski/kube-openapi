@@ -55,6 +55,16 @@ func (p *PathItem) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &p.PathItemProps)
 }
 
+func (p *PathItem) UnmarshalUnstructured(data interface{}) error {
+	if err := FromUnstructured(data, &p.Refable); err != nil {
+		return err
+	}
+	if err := FromUnstructured(data, &p.VendorExtensible); err != nil {
+		return err
+	}
+	return FromUnstructured(data, &p.PathItemProps)
+}
+
 // MarshalJSON converts this items object to JSON
 func (p PathItem) MarshalJSON() ([]byte, error) {
 	b3, err := json.Marshal(p.Refable)

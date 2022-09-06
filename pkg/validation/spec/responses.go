@@ -54,6 +54,19 @@ func (r *Responses) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (r *Responses) UnmarshalUnstructured(data interface{}) error {
+	if err := FromUnstructured(data, &r.ResponsesProps); err != nil {
+		return err
+	}
+	if err := FromUnstructured(data, &r.VendorExtensible); err != nil {
+		return err
+	}
+	if reflect.DeepEqual(ResponsesProps{}, r.ResponsesProps) {
+		r.ResponsesProps = ResponsesProps{}
+	}
+	return nil
+}
+
 // MarshalJSON converts this items object to JSON
 func (r Responses) MarshalJSON() ([]byte, error) {
 	b1, err := json.Marshal(r.ResponsesProps)
@@ -92,6 +105,26 @@ func (r ResponsesProps) MarshalJSON() ([]byte, error) {
 func (r *ResponsesProps) UnmarshalJSON(data []byte) error {
 	var res map[string]Response
 	if err := json.Unmarshal(data, &res); err != nil {
+		return nil
+	}
+	if v, ok := res["default"]; ok {
+		r.Default = &v
+		delete(res, "default")
+	}
+	for k, v := range res {
+		if nk, err := strconv.Atoi(k); err == nil {
+			if r.StatusCodeResponses == nil {
+				r.StatusCodeResponses = map[int]Response{}
+			}
+			r.StatusCodeResponses[nk] = v
+		}
+	}
+	return nil
+}
+
+func (r *ResponsesProps) UnmarshalUnstructured(data interface{}) error {
+	var res map[string]Response
+	if err := FromUnstructured(data, &res); err != nil {
 		return nil
 	}
 	if v, ok := res["default"]; ok {

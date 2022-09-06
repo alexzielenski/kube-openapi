@@ -87,6 +87,30 @@ func (i *Items) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (i *Items) UnmarshalUnstructured(data interface{}) error {
+	var validations CommonValidations
+	if err := FromUnstructured(data, &validations); err != nil {
+		return err
+	}
+	var ref Refable
+	if err := FromUnstructured(data, &ref); err != nil {
+		return err
+	}
+	var simpleSchema SimpleSchema
+	if err := FromUnstructured(data, &simpleSchema); err != nil {
+		return err
+	}
+	var vendorExtensible VendorExtensible
+	if err := FromUnstructured(data, &vendorExtensible); err != nil {
+		return err
+	}
+	i.Refable = ref
+	i.CommonValidations = validations
+	i.SimpleSchema = simpleSchema
+	i.VendorExtensible = vendorExtensible
+	return nil
+}
+
 // MarshalJSON converts this items object to JSON
 func (i Items) MarshalJSON() ([]byte, error) {
 	b1, err := json.Marshal(i.CommonValidations)

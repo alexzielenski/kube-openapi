@@ -73,3 +73,16 @@ func (h *Header) UnmarshalJSON(data []byte) error {
 	}
 	return json.Unmarshal(data, &h.HeaderProps)
 }
+
+func (h *Header) UnmarshalUnstructured(data interface{}) error {
+	if err := FromUnstructured(data, &h.CommonValidations); err != nil {
+		return err
+	}
+	if err := FromUnstructured(data, &h.SimpleSchema); err != nil {
+		return err
+	}
+	if err := FromUnstructured(data, &h.VendorExtensible); err != nil {
+		return err
+	}
+	return FromUnstructured(data, &h.HeaderProps)
+}

@@ -138,6 +138,14 @@ func (r *SchemaURL) UnmarshalJSON(data []byte) error {
 	return r.fromMap(v)
 }
 
+func (r *SchemaURL) UnmarshalUnstructured(data interface{}) error {
+	var v map[string]interface{}
+	if err := FromUnstructured(data, &v); err != nil {
+		return err
+	}
+	return r.fromMap(v)
+}
+
 func (r *SchemaURL) fromMap(v map[string]interface{}) error {
 	if v == nil {
 		return nil
@@ -508,6 +516,22 @@ func (s *Schema) UnmarshalJSON(data []byte) error {
 	}
 
 	*s = sch
+
+	return nil
+}
+
+func (s *Schema) UnmarshalUnstructured(data interface{}) error {
+	if err := FromUnstructured(data, &s.SchemaProps); err != nil {
+		return err
+	}
+
+	if err := FromUnstructured(data, &s.SwaggerSchemaProps); err != nil {
+		return err
+	}
+
+	if err := FromUnstructured(data, &s.VendorExtensible); err != nil {
+		return err
+	}
 
 	return nil
 }

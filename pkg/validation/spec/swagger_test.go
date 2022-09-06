@@ -16,6 +16,7 @@ package spec
 
 import (
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -124,5 +125,23 @@ func TestSwaggerSpec_Deserialize(t *testing.T) {
 	err := json.Unmarshal([]byte(specJSON), &actual)
 	if assert.NoError(t, err) {
 		assert.EqualValues(t, actual, spec)
+	}
+}
+
+const openapipath = "/Users/alex/go/src/k8s.io/kubernetes/api/openapi-spec/swagger.json" // https://github.com/kubernetes/kubernetes/blob/master/api/openapi-spec/swagger.json
+
+func BenchmarkJsonUnmarshalUnstructured(b *testing.B) {
+	content, err := os.ReadFile(openapipath)
+	if err != nil {
+		b.Fatalf("Failed to open file: %v", err)
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		t := Swagger{}
+		err := json.Unmarshal(content, &t)
+		if err != nil {
+			b.Fatalf("Failed to unmarshal: %v", err)
+		}
 	}
 }

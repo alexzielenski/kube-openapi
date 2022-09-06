@@ -16,9 +16,11 @@ package spec
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/go-openapi/swag"
+	"k8s.io/kube-openapi/pkg/util"
 )
 
 // Swagger this is the root document object for the API specification.
@@ -44,18 +46,44 @@ func (s Swagger) MarshalJSON() ([]byte, error) {
 	return swag.ConcatJSON(b1, b2), nil
 }
 
+// Wrapper around FromUnstructured that allows interface{} to be provided
+func FromUnstructured(i interface{}, target interface{}) error {
+	if unmarshaler, ok := i.(util.UnstructuredUnmarshaler); ok {
+		return unmarshaler.UnmarshalUnstructured(i)
+	}
+
+	if asMap, ok := i.(map[string]interface{}); ok {
+		return util.DefaultUnstructuredConverter.FromUnstructured(asMap, target)
+	}
+	return errors.New("unknown type")
+}
+
 // UnmarshalJSON unmarshals a swagger spec from json
 func (s *Swagger) UnmarshalJSON(data []byte) error {
-	var sw Swagger
-	if err := json.Unmarshal(data, &sw.SwaggerProps); err != nil {
+	var i map[string]interface{}
+	if err := json.Unmarshal(data, &i); err != nil {
 		return err
 	}
-	if err := json.Unmarshal(data, &sw.VendorExtensible); err != nil {
+	if err := FromUnstructured(i, &s.SwaggerProps); err != nil {
 		return err
 	}
-	*s = sw
+	if err := FromUnstructured(i, &s.VendorExtensible); err != nil {
+		return err
+	}
 	return nil
 }
+
+// func (s *Swagger) UnmarshalJSON(data []byte) error {
+// 	var sw Swagger
+// 	if err := json.Unmarshal(data, &sw.SwaggerProps); err != nil {
+// 		return err
+// 	}
+// 	if err := json.Unmarshal(data, &sw.VendorExtensible); err != nil {
+// 		return err
+// 	}
+// 	*s = sw
+// 	return nil
+// }
 
 // SwaggerProps captures the top-level properties of an Api specification
 //
@@ -123,6 +151,17 @@ func (s *SchemaOrBool) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (s *SchemaOrBool) UnmarshalUnstructured(data interface{}) error {
+	if b, ok := data.(bool); ok {
+		s.Allows = b
+		return nil
+	}
+
+	// For compatibility with MarshalJSON
+	s.Allows = true
+	return s.Schema.UnmarshalUnstructured(data)
+}
+
 // SchemaOrStringArray represents a schema or a string array
 type SchemaOrStringArray struct {
 	Schema   *Schema
@@ -161,6 +200,15 @@ func (s *SchemaOrStringArray) UnmarshalJSON(data []byte) error {
 	}
 	*s = nw
 	return nil
+}
+
+func (s *SchemaOrStringArray) UnmarshalUnstructured(data interface{}) error {
+	if ar, ok := data.([]string); ok {
+		s.Property = ar
+		return nil
+	}
+
+	return s.Schema.UnmarshalUnstructured(data)
 }
 
 // Definitions contains the models explicitly defined in this spec
@@ -223,6 +271,20 @@ func (s *StringOrArray) UnmarshalJSON(data []byte) error {
 	}
 }
 
+func (s *StringOrArray) UnmarshalUnstructured(data interface{}) error {
+	if str, ok := data.(string); ok {
+		*s = []string{str}
+		return nil
+	}
+
+	if ar, ok := data.([]string); ok {
+		*s = ar
+		return nil
+	}
+
+	return fmt.Errorf("expected string or []string, got %T", data)
+}
+
 // MarshalJSON converts this string or array to a JSON array or JSON string
 func (s StringOrArray) MarshalJSON() ([]byte, error) {
 	if len(s) == 1 {
@@ -283,4 +345,18 @@ func (s *SchemaOrArray) UnmarshalJSON(data []byte) error {
 	}
 	*s = nw
 	return nil
+}
+
+func (s *SchemaOrArray) UnmarshalUnstructured(data interface{}) error {
+	if ds, ok := data.([]interface{}); ok {
+		for _, r := range ds {
+			val := Schema{}
+			if err := val.UnmarshalUnstructured(r); err != nil {
+				return err
+			}
+			s.Schemas = append(s.Schemas, val)
+		}
+	}
+
+	return s.Schema.UnmarshalUnstructured(data)
 }
