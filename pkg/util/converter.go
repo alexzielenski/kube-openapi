@@ -414,14 +414,8 @@ func fromUnstructured(sv, dv reflect.Value, ctx *fromUnstructuredContext) error 
 		}
 	}
 
-	// Check if the object has a custom JSON marshaller/unmarshaller.
-	entry := value.TypeReflectEntryOf(dv.Type())
-	if entry.CanConvertFromUnstructured() {
-		return entry.FromUnstructured(sv, dv)
-	}
-
-	if dv.Type().Implements(unmarshalerType) {
-		u, _ := indirect(dv, sv.IsNil())
+	if reflect.PtrTo(dv.Type()).Implements(unmarshalerType) {
+		u := dv.Addr().Interface().(UnstructuredUnmarshaler)
 		if u != nil {
 			return u.UnmarshalUnstructured(sv.Interface())
 		}

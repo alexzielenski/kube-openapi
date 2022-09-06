@@ -62,3 +62,10 @@ func (s *SecurityScheme) UnmarshalJSON(data []byte) error {
 	}
 	return json.Unmarshal(data, &s.VendorExtensible)
 }
+
+func (s *SecurityScheme) UnmarshalUnstructured(data interface{}) error {
+	if err := FromUnstructured(data, &s.SecuritySchemeProps); err != nil {
+		return err
+	}
+	return FromUnstructured(data, &s.VendorExtensible)
+}

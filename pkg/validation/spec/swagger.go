@@ -48,7 +48,7 @@ func (s Swagger) MarshalJSON() ([]byte, error) {
 
 // Wrapper around FromUnstructured that allows interface{} to be provided
 func FromUnstructured(i interface{}, target interface{}) error {
-	if unmarshaler, ok := i.(util.UnstructuredUnmarshaler); ok {
+	if unmarshaler, ok := target.(util.UnstructuredUnmarshaler); ok {
 		return unmarshaler.UnmarshalUnstructured(i)
 	}
 
@@ -159,7 +159,12 @@ func (s *SchemaOrBool) UnmarshalUnstructured(data interface{}) error {
 
 	// For compatibility with MarshalJSON
 	s.Allows = true
-	return s.Schema.UnmarshalUnstructured(data)
+	var sch Schema
+	if err := sch.UnmarshalUnstructured(data); err != nil {
+		return err
+	}
+	s.Schema = &sch
+	return nil
 }
 
 // SchemaOrStringArray represents a schema or a string array
@@ -208,7 +213,12 @@ func (s *SchemaOrStringArray) UnmarshalUnstructured(data interface{}) error {
 		return nil
 	}
 
-	return s.Schema.UnmarshalUnstructured(data)
+	var sch Schema
+	if err := sch.UnmarshalUnstructured(data); err != nil {
+		return err
+	}
+	s.Schema = &sch
+	return nil
 }
 
 // Definitions contains the models explicitly defined in this spec
@@ -358,5 +368,10 @@ func (s *SchemaOrArray) UnmarshalUnstructured(data interface{}) error {
 		}
 	}
 
-	return s.Schema.UnmarshalUnstructured(data)
+	var sch Schema
+	if err := sch.UnmarshalUnstructured(data); err != nil {
+		return err
+	}
+	s.Schema = &sch
+	return nil
 }

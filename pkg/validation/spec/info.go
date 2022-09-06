@@ -16,6 +16,7 @@ package spec
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/go-openapi/swag"
@@ -120,6 +121,23 @@ func (v *VendorExtensible) UnmarshalJSON(data []byte) error {
 	var d map[string]interface{}
 	if err := json.Unmarshal(data, &d); err != nil {
 		return err
+	}
+	for k, vv := range d {
+		lk := strings.ToLower(k)
+		if strings.HasPrefix(lk, "x-") {
+			if v.Extensions == nil {
+				v.Extensions = map[string]interface{}{}
+			}
+			v.Extensions[k] = vv
+		}
+	}
+	return nil
+}
+
+func (v *VendorExtensible) UnmarshalUnstructured(data interface{}) error {
+	d, ok := data.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("expected map, got %T", data)
 	}
 	for k, vv := range d {
 		lk := strings.ToLower(k)

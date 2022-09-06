@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 
 	"github.com/go-openapi/swag"
+	"k8s.io/kube-openapi/pkg/util"
 )
 
 // PathItemProps the path item specific properties
@@ -43,6 +44,8 @@ type PathItem struct {
 	VendorExtensible
 	PathItemProps
 }
+
+var _ util.UnstructuredUnmarshaler = &PathItem{}
 
 // UnmarshalJSON hydrates this items instance with the data from JSON
 func (p *PathItem) UnmarshalJSON(data []byte) error {
