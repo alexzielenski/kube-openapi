@@ -60,6 +60,24 @@ func (c *CELTag) Validate() error {
 	return nil
 }
 
+// Name Formats used by Kubernetes types
+// A name format includes a pattern both on the Name and GenerateName fields.
+// GenerateName field should account for trailing dash.
+type NameFormat string
+
+const (
+	// DNS 1123 subdomain with k8s-isms
+	K8s1123Subdomain NameFormat = "k8s-1123-subdomain"
+
+	// DNS 1123 label with k8s-isms
+	K8s1123Label NameFormat = "k8s-1123-label"
+
+	// DNS 1035 label with k8s-isms
+	K8s1035Label NameFormat = "k8s-1035-label"
+
+	// Passes upstream k8s path.ValidatePathSegmentName
+	K8sPathSegment NameFormat = "k8s-path-segment"
+)
 
 // commentTags represents the parsed comment tags for a given type. These types are then used to generate schema validations.
 // These only include the newer prefixed tags. The older tags are still supported,
@@ -79,6 +97,10 @@ type commentTags struct {
 
 	CEL []CELTag `json:"cel,omitempty"`
 
+	// Format to use to validate the name for objects of this type.
+	// May only be annotated onto a top-level type.
+	NameFormat *NameFormat `json:"nameFormat,omitempty"`
+
 	// Future markers can all be parsed into this centralized struct...
 	// Optional bool `json:"optional,omitempty"`
 	// Default  any  `json:"default,omitempty"`
@@ -90,7 +112,10 @@ func (c commentTags) ValidationSchema() (*spec.Schema, error) {
 	res := spec.Schema{
 		SchemaProps: c.SchemaProps,
 	}
-	res.AllOf = append([]spec.Schema{}, res.AllOf...)
+
+	if res.AllOf != nil {
+		res.AllOf = append([]spec.Schema{}, res.AllOf...)
+	}
 
 	if c.NameFormat != nil {
 		res.AllOf = append(res.AllOf, spec.Schema{
@@ -239,6 +264,13 @@ func (c commentTags) ValidateType(t *types.Type) error {
 	}
 
 	return err
+}
+
+// Until the name formats are stable, we will embed the pattern for the name
+// format into each generated OpenAPI document. This allows us to change the
+// pattern without breaking existing clients.
+func patternForNameFormat(nameFormat NameFormat) string {
+	return ""
 }
 
 // Parses the given comments into a CommentTags type. Validates the parsed comment tags, and returns the result.
