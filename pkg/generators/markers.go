@@ -420,8 +420,10 @@ func extractCommentTags(marker string, lines []string) (map[string]string, error
 			// key and either the same or previous index
 			if err != nil {
 				lintErrors = append(lintErrors, fmt.Errorf("error parsing %v: expected integer index in key '%v'", line, key))
-			} else if previousArrayKey != arrayPath && index != 0 {
-				lintErrors = append(lintErrors, fmt.Errorf("error parsing %v: non-consecutive index %v for key '%v'", line, index, arrayPath))
+			} else if previousArrayKey != arrayPath {
+				if index != 0 {
+					lintErrors = append(lintErrors, fmt.Errorf("error parsing %v: non-consecutive index %v for key '%v'", line, index, arrayPath))
+				}
 			} else if index != previousIndex+1 && index != previousIndex {
 				lintErrors = append(lintErrors, fmt.Errorf("error parsing %v: non-consecutive index %v for key '%v'", line, index, arrayPath))
 			}
